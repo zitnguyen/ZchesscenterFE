@@ -18,19 +18,29 @@ export default function RevenueList() {
   }, []);
 
   const fetchRevenues = async () => {
-    const res = await api.get("/revenues");
-    setRevenues(res.data);
+    try {
+      const res = await api.get("/revenues");
+      setRevenues(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("Không thể lấy danh sách doanh thu");
+    }
   };
 
   const fetchStudents = async () => {
-    const res = await api.get("/student");
-    setStudents(res.data);
+    try {
+      const res = await api.get("/student");
+      setStudents(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("Không thể lấy danh sách học sinh");
+    }
   };
 
   const handleEdit = (r) => {
     setEditingId(r._id);
     setFormData({
-      studentId: r.studentId,
+      studentId: r.studentId._id,
       month: r.month,
       amount: r.amount,
     });
@@ -44,14 +54,19 @@ export default function RevenueList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      await api.put(`/revenues/${editingId}`, formData);
-    } else {
-      await api.post("/revenues", formData);
+    try {
+      if (editingId) {
+        await api.put(`/revenues/${editingId}`, formData);
+      } else {
+        await api.post("/revenues", formData);
+      }
+      setFormData({ studentId: "", month: "", amount: 0 });
+      setEditingId(null);
+      fetchRevenues();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Có lỗi xảy ra");
     }
-    setFormData({ studentId: "", month: "", amount: 0 });
-    setEditingId(null);
-    fetchRevenues();
   };
 
   return (
@@ -59,6 +74,8 @@ export default function RevenueList() {
       {/* FORM */}
       <form className="teacher-form" onSubmit={handleSubmit}>
         <h3>{editingId ? "Sửa doanh thu" : "Thêm doanh thu"}</h3>
+
+        {/* Chọn học sinh */}
         <select
           value={formData.studentId}
           onChange={(e) =>
@@ -66,29 +83,46 @@ export default function RevenueList() {
           }
           required
         >
-          <option value="">Chọn học sinh</option>
+          <option value="">-- Chọn học sinh --</option>
           {students.map((s) => (
             <option key={s._id} value={s._id}>
               {s.name}
             </option>
           ))}
         </select>
-        <input
-          type="text"
-          placeholder="Tháng (ví dụ: 12/2025)"
+
+        {/* Chọn tháng */}
+        <select
           value={formData.month}
           onChange={(e) => setFormData({ ...formData, month: e.target.value })}
           required
-        />
+        >
+          <option value="">-- Chọn tháng --</option>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+
+        {/* Nhập số tiền có dấu , */}
         <input
-          type="number"
+          type="text"
           placeholder="Số tiền"
-          value={formData.amount}
-          onChange={(e) =>
-            setFormData({ ...formData, amount: Number(e.target.value) })
+          value={
+            formData.amount === 0 ? "" : formData.amount.toLocaleString("vi-VN")
           }
+          onChange={(e) => {
+            // chỉ giữ ký tự số, loại bỏ dấu ,
+            const value = e.target.value.replace(/[^0-9]/g, "");
+            setFormData({
+              ...formData,
+              amount: value ? parseInt(value) : 0,
+            });
+          }}
           required
         />
+
         <button type="submit">{editingId ? "Cập nhật" : "Thêm"}</button>
       </form>
 
@@ -103,27 +137,24 @@ export default function RevenueList() {
           </tr>
         </thead>
         <tbody>
-          {revenues.map((r) => {
-            const student = students.find((s) => s._id === r.studentId);
-            return (
-              <tr key={r._id}>
-                <td>{student ? student.name : "Không rõ"}</td>
-                <td>{r.month}</td>
-                <td>{r.amount.toLocaleString("vi-VN")}</td>
-                <td>
-                  <button className="edit-btn" onClick={() => handleEdit(r)}>
-                    Sửa
-                  </button>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(r._id)}
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
+          {revenues.map((r) => (
+            <tr key={r._id}>
+              <td>{r.studentId?.name || "Không rõ"}</td>
+              <td>{r.month}</td>
+              <td>{r.amount.toLocaleString("vi-VN")}</td>
+              <td>
+                <button className="edit-btn" onClick={() => handleEdit(r)}>
+                  Sửa
+                </button>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(r._id)}
+                >
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

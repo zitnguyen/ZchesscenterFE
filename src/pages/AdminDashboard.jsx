@@ -4,6 +4,7 @@ import RevenueList from "../components/RevenueList";
 import ExpenseList from "../components/ExpenseList";
 import AdTeacherList from "../components/AdTeacherList";
 import StudentList from "../components/StudentList";
+import ScheduleList from "../components/ScheduleList";
 import api from "../api/axios";
 import "../index.css";
 
@@ -54,7 +55,9 @@ export default function AdminDashboard({ setUser }) {
           <button onClick={() => setActiveTab("students")}>Học viên</button>
           <button onClick={() => setActiveTab("revenues")}>Doanh thu</button>
           <button onClick={() => setActiveTab("expenses")}>Chi phí</button>
+          <button onClick={() => setActiveTab("schedules")}>Ca dạy</button>
         </aside>
+
         <main className="main">
           {activeTab === "dashboard" && (
             <div className="dashboard">
@@ -99,6 +102,13 @@ export default function AdminDashboard({ setUser }) {
           {activeTab === "expenses" && (
             <div className="dashboard">
               <ExpenseList />
+            </div>
+          )}
+
+          {activeTab === "schedules" && (
+            <div className="dashboard">
+              <h2>Ca dạy</h2>
+              <ScheduleList />
             </div>
           )}
         </main>

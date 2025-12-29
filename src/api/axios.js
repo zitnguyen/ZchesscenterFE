@@ -26,7 +26,6 @@ instance.interceptors.response.use(
       localStorage.removeItem("token");
       // Redirect về trang login
       window.location.href = "/login";
-      alert("Bạn đã bị đăng xuất do tài khoản không còn hợp lệ");
     }
     return Promise.reject(error);
   }

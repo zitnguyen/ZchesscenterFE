@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import api from "../api/axios";
+import "../index.css";
 
 export default function ExpenseList() {
   const [expenses, setExpenses] = useState([]);
-  const [formData, setFormData] = useState({ amount: 0, note: "" });
-  const [editing, setEditing] = useState(null);
-  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    month: "",
+    amount: 0,
+    content: "",
+  });
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -17,113 +21,114 @@ export default function ExpenseList() {
       setExpenses(res.data);
     } catch (err) {
       console.error(err);
+      alert("Không thể lấy danh sách chi phí");
     }
   };
 
   const handleEdit = (exp) => {
-    setEditing(exp);
-    setFormData({ amount: exp.amount, note: exp.note });
-    setShowForm(true);
+    setEditingId(exp._id);
+    setFormData({
+      month: exp.month,
+      amount: exp.amount,
+      content: exp.content || "",
+    });
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Xóa chi phí này?")) {
-      await api.delete(`/expenses/${id}`);
-      fetchExpenses();
-    }
+    if (!window.confirm("Bạn có chắc muốn xóa chi phí này?")) return;
+    await api.delete(`/expenses/${id}`);
+    fetchExpenses();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editing) {
-        await api.put(`/expenses/${editing._id}`, formData);
+      if (editingId) {
+        await api.put(`/expenses/${editingId}`, formData);
       } else {
         await api.post("/expenses", formData);
       }
+      setFormData({ month: "", amount: 0, content: "" });
+      setEditingId(null);
       fetchExpenses();
-      setShowForm(false);
-      setEditing(null);
-      setFormData({ amount: 0, note: "" });
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || "Có lỗi xảy ra");
     }
   };
 
   return (
-    <div>
-      <h2>Chi phí</h2>
-      <button
-        className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:scale-105 transition"
-        onClick={() => setShowForm(true)}
-      >
-        Thêm chi phí
-      </button>
+    <div className="student-list-container">
+      {/* FORM */}
+      <form className="teacher-form" onSubmit={handleSubmit}>
+        <h3>{editingId ? "Sửa chi phí" : "Thêm chi phí"}</h3>
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="mb-4 p-4 border rounded shadow"
+        {/* Chọn tháng */}
+        <select
+          value={formData.month}
+          onChange={(e) => setFormData({ ...formData, month: e.target.value })}
+          required
         >
-          <input
-            type="number"
-            placeholder="Số tiền"
-            value={formData.amount}
-            onChange={(e) =>
-              setFormData({ ...formData, amount: Number(e.target.value) })
-            }
-            className="border p-2 mr-2"
-          />
-          <input
-            placeholder="Ghi chú"
-            value={formData.note}
-            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-            className="border p-2 mr-2"
-          />
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-3 py-1 rounded hover:scale-105 transition"
-          >
-            {editing ? "Cập nhật" : "Thêm"}
-          </button>
-          <button
-            type="button"
-            className="ml-2 bg-gray-400 text-white px-3 py-1 rounded hover:scale-105 transition"
-            onClick={() => {
-              setShowForm(false);
-              setEditing(null);
-            }}
-          >
-            Hủy
-          </button>
-        </form>
-      )}
+          <option value="">-- Chọn tháng --</option>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
 
-      <table className="w-full border border-gray-300">
-        <thead className="bg-gray-100">
+        {/* Nhập số tiền có dấu , */}
+        <input
+          type="text"
+          placeholder="Số tiền"
+          value={
+            formData.amount === 0 ? "" : formData.amount.toLocaleString("vi-VN")
+          }
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9]/g, "");
+            setFormData({ ...formData, amount: value ? parseInt(value) : 0 });
+          }}
+          required
+        />
+
+        {/* Ghi chú */}
+        <input
+          type="text"
+          placeholder="Ghi chú"
+          value={formData.content}
+          onChange={(e) =>
+            setFormData({ ...formData, content: e.target.value })
+          }
+        />
+
+        <button type="submit">{editingId ? "Cập nhật" : "Thêm"}</button>
+      </form>
+
+      {/* TABLE */}
+      <table className="teacher-table">
+        <thead>
           <tr>
-            <th className="p-2 border">Số tiền</th>
-            <th className="p-2 border">Ghi chú</th>
-            <th className="p-2 border">Hành động</th>
+            <th>Tháng</th>
+            <th>Số tiền</th>
+            <th>Ghi chú</th>
+            <th>Hành động</th>
           </tr>
         </thead>
         <tbody>
           {expenses.map((e) => (
-            <tr key={e._id} className="hover:bg-gray-50">
-              <td className="p-2 border">{e.amount.toLocaleString("vi-VN")}</td>
-              <td className="p-2 border">{e.note}</td>
-              <td className="p-2 border flex gap-2">
-                <button
-                  className="bg-yellow-500 text-white px-2 py-1 rounded"
-                  onClick={() => handleEdit(e)}
-                >
-                  Edit
+            <tr key={e._id}>
+              <td>{e.month}</td>
+              <td>{e.amount.toLocaleString("vi-VN")}</td>
+              <td>{e.content}</td>
+              <td>
+                <button className="edit-btn" onClick={() => handleEdit(e)}>
+                  Sửa
                 </button>
                 <button
-                  className="bg-red-600 text-white px-2 py-1 rounded"
+                  className="delete-btn"
                   onClick={() => handleDelete(e._id)}
                 >
-                  Delete
+                  Xóa
                 </button>
               </td>
             </tr>
