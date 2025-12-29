@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import RevenueList from "../components/RevenueList";
 import ExpenseList from "../components/ExpenseList";
-import TeacherList from "../components/TeacherList";
+import AdTeacherList from "../components/AdTeacherList";
 import StudentList from "../components/StudentList";
 import api from "../api/axios";
 import "../index.css";
@@ -79,7 +79,7 @@ export default function AdminDashboard({ setUser }) {
           {activeTab === "teachers" && (
             <div className="dashboard">
               <h2>Danh sách giáo viên</h2>
-              <TeacherList />
+              <AdTeacherList />
             </div>
           )}
 

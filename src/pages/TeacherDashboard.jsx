@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
-import StudentList from "../components/StudentList";
-import TeacherList from "../components/TeacherList";
+import TTStudentList from "../components/TTStudentList";
+import TTTeacherList from "../components/TTTeacherList";
 import api from "../api/axios";
 import "../index.css";
 
@@ -36,14 +36,14 @@ export default function TeacherDashboard({ setUser }) {
           {activeTab === "students" && (
             <div className="dashboard">
               <h2>Danh sách học viên</h2>
-              <StudentList viewOnly={true} />
+              <TTStudentList viewOnly={true} />
             </div>
           )}
 
           {activeTab === "teachers" && (
             <div className="dashboard">
               <h2>Danh sách giáo viên</h2>
-              <TeacherList viewOnly={true} />
+              <TTTeacherList viewOnly={true} />
             </div>
           )}
 

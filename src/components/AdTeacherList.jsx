@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import api from "../api/axios";
-import "../index.css";
 
-export default function TeacherList() {
+export default function AdTeacherList() {
   const [teachers, setTeachers] = useState([]);
-  const [form, setForm] = useState({ name: "", email: "", role: "teacher" });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [editingId, setEditingId] = useState(null);
+  const [message, setMessage] = useState(""); // state hiển thị thông báo
+  const [messageType, setMessageType] = useState("success"); // success | error
 
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  const showMessage = (msg, type = "success") => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3000); // 3 giây tự ẩn
+  };
 
   const fetchTeachers = async () => {
     try {
@@ -17,6 +24,7 @@ export default function TeacherList() {
       setTeachers(res.data);
     } catch (err) {
       console.error(err);
+      showMessage("Lấy danh sách giáo viên thất bại", "error");
     }
   };
 
@@ -24,37 +32,64 @@ export default function TeacherList() {
     e.preventDefault();
     try {
       if (editingId) {
-        await api.put(`/teacher/${editingId}`, form);
+        const updateData = { name: form.name, email: form.email };
+        if (form.password) updateData.password = form.password;
+        await api.put(`/teacher/${editingId}`, updateData);
+        showMessage("Cập nhật giáo viên thành công");
       } else {
+        if (!form.password) {
+          showMessage("Vui lòng nhập mật khẩu cho giáo viên mới", "error");
+          return;
+        }
         await api.post("/teacher", form);
+        showMessage("Thêm giáo viên thành công");
       }
-      setForm({ name: "", email: "", role: "teacher" });
+      setForm({ name: "", email: "", password: "" });
       setEditingId(null);
       fetchTeachers();
     } catch (err) {
       console.error(err);
+      showMessage(err.response?.data?.message || "Có lỗi xảy ra", "error");
     }
   };
 
   const handleEdit = (t) => {
     setEditingId(t._id);
-    setForm({ name: t.name, email: t.email, role: t.role });
+    setForm({ name: t.name, email: t.email, password: "" });
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Bạn có chắc muốn xóa giáo viên này?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa giáo viên này?")) return;
     try {
       await api.delete(`/teacher/${id}`);
       fetchTeachers();
     } catch (err) {
       console.error(err);
+      showMessage(err.response?.data?.message || "Có lỗi xảy ra", "error");
     }
   };
 
   return (
     <div className="teacher-list-container">
+      {/* MESSAGE */}
+      {message && (
+        <div
+          style={{
+            marginBottom: "15px",
+            padding: "10px",
+            borderRadius: "6px",
+            color: "#fff",
+            backgroundColor: messageType === "success" ? "#28a745" : "#dc3545",
+            textAlign: "center",
+            fontWeight: "600",
+          }}
+        >
+          {message}
+        </div>
+      )}
+
       {/* FORM */}
-      <form onSubmit={handleSubmit} className="teacher-form">
+      <form className="teacher-form" onSubmit={handleSubmit}>
         <h3>{editingId ? "Sửa giáo viên" : "Thêm giáo viên"}</h3>
         <input
           type="text"
@@ -69,6 +104,15 @@ export default function TeacherList() {
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
+        />
+        <input
+          type="password"
+          placeholder={
+            editingId ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"
+          }
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required={!editingId}
         />
         <button type="submit">{editingId ? "Cập nhật" : "Thêm"}</button>
       </form>

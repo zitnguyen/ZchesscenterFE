@@ -12,7 +12,6 @@ export default function Login({ setUser }) {
       const res = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       setUser(true);
-      alert("Đăng nhập thành công");
     } catch (err) {
       alert(err.response?.data?.message || "Lỗi đăng nhập");
     }

@@ -13,4 +13,23 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+// interceptor để tự logout khi token không hợp lệ
+instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response &&
+      (error.response.status === 401 ||
+        error.response.data.message === "Tài khoản đã bị xóa")
+    ) {
+      // Xóa token
+      localStorage.removeItem("token");
+      // Redirect về trang login
+      window.location.href = "/login";
+      alert("Bạn đã bị đăng xuất do tài khoản không còn hợp lệ");
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default instance;
